@@ -33,6 +33,12 @@ Notes:
 * Currently, any change to the function's module will cause the function to be retested.
 * This will probably only work on linux at the moment...
 
+### Example output
+![Success](examples/success.png)
+
+### Example with exception
+![Exception](examples/error.png)
+
 ## Future ideas
 
 * Diffs of output and returned values.
