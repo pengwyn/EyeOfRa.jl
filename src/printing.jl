@@ -2,7 +2,12 @@
 const C_HEAD = Crayon(bold=true, foreground=:blue)
 const C_DIFF = YELLOW_FG
 
+function ShowRetest(io)
+    println(io, Crayon(foreground=:yellow, negative=true)("Rerunning code..."))
+end
+
 function ShowHeader(io, n, repeats, (func,args,kwds))
+    println(io, "ZCLEARZ")
     run(`clear`)
     C = NEGATIVE
 
@@ -70,7 +75,7 @@ function ShowObservation(io::IO, obs::OBSERVATION, last_success)
         end
     end
     println(io)
-    PrettyResult(io, obs.result, last_success)
+    PrettyResult(io, obs, last_success)
     if !isempty(obs.stdout)
         println(io)
         println(io, GREEN_FG("With stdout output: "))
@@ -84,20 +89,22 @@ function ShowObservation(io::IO, obs::OBSERVATION, last_success)
 end
 
 
-function PrettyResult(io::IO, out::Exception, last_call)
-    error("Shouldn't get here anymore")
-    println(io, Crayon(foreground=:red)("Code errored: ", string(out)))
-end
-
-function PrettyResult(io::IO, out::Some, last_success)
-    thing = something(out)
-
+function PrettyResult(io::IO, obs, last_success)
     print(io, C_HEAD("Return: "))
-    if last_success === nothing || typeof(something(last_success.result)) == typeof(thing)
-        println(io, Crayon(faint=true)(string(typeof(thing))))
+
+    if last_success === nothing || typeof(last_success.result) == typeof(obs.result)
+        type_crayon = Crayon(faint=true)
     else
-        println(io, C_DIFF(string(typeof(thing))))
+        type_crayon = C_DIFF
     end
-    show(io, MIME"text/plain"(), thing)
+    print(io, type_crayon(string(typeof(obs.result))))
+
+    if obs.inferred_type != typeof(obs.result)
+        print(io, RED_FG(" <: " * string(obs.inferred_type)))
+    end
+
+    println(io)
+
+    show(io, MIME"text/plain"(), obs.result)
     println(io)
 end
