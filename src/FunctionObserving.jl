@@ -24,9 +24,27 @@ end
 import Base: ==
 # ==(a::OBSERVATION, b::OBSERVATION) = (something(a.result) == something(b.result) && a.stdout == b.stdout)
 function ==(a::OBSERVATION, b::OBSERVATION)
-    prop_set = [:result, :stdout, :stderr, :inferred_ret]
+    prop_set = [:result, :stdout, :stderr, :inferred_type]
     return all(getproperty(a,prop) == getproperty(b,prop) for prop in prop_set)
 end
+
+
+mutable struct STATE
+    obs
+    last_success
+    n
+    repeats
+end
+const state = STATE(nothing, nothing, 0, 0)
+function empty!(s::STATE)
+    s.obs = nothing
+    s.last_success = nothing
+
+k_def = LinRange(0,5,101)[begin+1:end]
+    s.n = 0
+    s.repeats = 0
+end
+
 
 include("utils.jl")
 include("printing.jl")
@@ -82,35 +100,42 @@ See `@observe` for details.
 ObserveFunction(args...; kwds...) = ObserveFunction(stdout, args... ; kwds...)
 ObserveFunction(io::IO, mod::Symbol, func, args... ; kwds...) = ObserveFunction(io, (mod == :auto ? typeof(func).name.module : error("Unknown mod symbol $mod")), func, args... ; kwds...)
 
-function ObserveFunction(io::IO, mod, func, args, kwds=[] ; show_diffs=true)
-    local last_call = nothing
-    local last_success = nothing
-    local n = 0
-    local repeats = 0
+function ObserveFunction(io::IO, mod, func, args, kwds=[] ; show_diffs=true, continuing=false)
+    S = state
+    continuing || empty!(S)
 
     # @show mod func args kwds
     # error("stop")
 
-    entr([], [mod]) do
+    if mod isa AbstractString
+        files = [mod]
+        mods = []
+    else
+        files = []
+        mods = [mod]
+    end
+
+    entr(files, mods) do
         ShowRetest(io)
 
         ret = TestFunction(func, args, kwds)
-        n += 1
-        if ret == last_call
-            repeats += 1
+        S.n += 1
+        if ret == S.obs
+            S.repeats += 1
         else
-            repeats = 1
+            S.repeats = 1
         end
+        S.obs = ret
         
-        ShowHeader(io, n,repeats, (func,args,kwds))
+        ShowHeader(io, S, (func,args,kwds))
 
         if ret.result isa Exception
-            ShowError(io, ret)
-            ShowObservation(io, last_success, nothing)
-            last_call = ret
+            ShowError(io, S.obs)
+            println(io, NEGATIVE("Previous success:"))
+            ShowObservation(io, S.last_success, nothing)
         else
-            ShowObservation(io, ret, last_success)
-            last_call = last_success = ret
+            ShowObservation(io, S.obs, S.last_success)
+            S.last_success = ret
         end
     end
 end

@@ -5,11 +5,14 @@ import Base: redirect_stdout
 function redirect_both(f::Function, stdout_buf, stderr_buf)
     old_stdout = stdout
     old_stderr = stderr
-    try
-        stdout_rd,stdout_wr = redirect_stdout()
-        stderr_rd,stderr_wr = redirect_stderr()
 
+    stdout_rd,stdout_wr = redirect_stdout()
+    stderr_rd,stderr_wr = redirect_stderr()
+
+    try
         ret = f()
+        return ret
+    finally
         # This is ridiculous - readavailable will block without any output and
         # there seems to be no way to tell whether there is any output from the
         # pipes. Is it hidden in libuv somewhere?
@@ -27,8 +30,6 @@ function redirect_both(f::Function, stdout_buf, stderr_buf)
         write(stdout_buf, readavailable(stdout_rd)[begin:end-1])
         write(stderr_buf, readavailable(stderr_rd)[begin:end-1])
 
-        return ret
-    finally
         redirect_stdout(old_stdout)
         redirect_stderr(old_stderr)
     end

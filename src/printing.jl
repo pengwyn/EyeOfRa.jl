@@ -6,16 +6,16 @@ function ShowRetest(io)
     println(io, Crayon(foreground=:yellow, negative=true)("Rerunning code..."))
 end
 
-function ShowHeader(io, n, repeats, (func,args,kwds))
+function ShowHeader(io, S, (func,args,kwds))
     println(io, "ZCLEARZ")
     run(`clear`)
     C = NEGATIVE
 
     println(io, C("Command:"), " $func(", join(args, ", "), " ; ", join(kwds, ", "), ")")
     time = Dates.format(now(), dateformat"HH:MM:SS")
-    println(io, C("Iteration: $(lpad(n,4))"), " - time: $(time)")
-    if repeats >= 2
-        println(io, Crayon(foreground=:green)("Repeated: $(lpad(repeats,4))"))
+    println(io, C("Iteration: $(lpad(S.n,4))"), " - time: $(time)")
+    if S.repeats >= 2
+        println(io, Crayon(foreground=:green)("Repeated: $(lpad(S.repeats,4))"))
     else
         println(io)
     end
@@ -57,13 +57,12 @@ function ShowError(io::IO, obs::OBSERVATION)
     println(io, RED_BG("Exception: ", sprint(showerror, obs.result)))
     println(io, YELLOW_FG(join(rows,"\n")))
     println(io)
+    ShowStds(io, obs)
     println(io)
-    println(io, NEGATIVE("Previous success:"))
 end
 
-ShowObservation(io::IO, obs::Nothing, last_success) = println(io, "No observation")
-
-function ShowObservation(io::IO, obs::OBSERVATION, last_success)
+ShowObservation(io::IO, obs::Nothing, last_success) = println(io, "No observation!")
+function ShowObservation(io::IO, obs, last_success)
     # println(io)
     print(io, C_HEAD("Duration: "), PrettyTime(obs.time))
     if last_success !== nothing
@@ -75,7 +74,15 @@ function ShowObservation(io::IO, obs::OBSERVATION, last_success)
         end
     end
     println(io)
-    PrettyResult(io, obs, last_success)
+    if (obs.result isa Exception)
+        PrettyResult(io, last_success, nothing)
+    else
+        PrettyResult(io, obs, last_success)
+    end
+end
+
+ShowStds(io, obs::Nothing) = nothing
+function ShowStds(io, obs)
     if !isempty(obs.stdout)
         println(io)
         println(io, GREEN_FG("With stdout output: "))
@@ -89,6 +96,7 @@ function ShowObservation(io::IO, obs::OBSERVATION, last_success)
 end
 
 
+PrettyResult(io::IO, obs::Nothing, last_success) = println(io, "No observation")
 function PrettyResult(io::IO, obs, last_success)
     print(io, C_HEAD("Return: "))
 
@@ -107,4 +115,7 @@ function PrettyResult(io::IO, obs, last_success)
 
     show(io, MIME"text/plain"(), obs.result)
     println(io)
+
+    ShowStds(io, obs)
 end
+
