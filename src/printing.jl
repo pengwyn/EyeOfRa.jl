@@ -7,8 +7,9 @@ function ShowRetest(io)
 end
 
 function ShowHeader(io, S, (func,args,kwds))
-    println(io, "ZCLEARZ")
-    run(`clear`)
+    display(CLEAR())
+    # println(io, "ZCLEARZ")
+    # run(`clear`)
     C = NEGATIVE
 
     println(io, C("Command:"), " $func(", join(args, ", "), " ; ", join(kwds, ", "), ")")
@@ -113,9 +114,19 @@ function PrettyResult(io::IO, obs, last_success)
 
     println(io)
 
-    show(io, MIME"text/plain"(), obs.result)
+    display(obs.result)
     println(io)
 
     ShowStds(io, obs)
 end
+
+
+# This is a setup to allow it to be overridden in other displays.
+struct CLEAR end
+
+import Base: show, display
+show(io::IO, obj::CLEAR) = println(io,string(obj))
+
+display(d::AbstractDisplay, ::CLEAR) = run(`clear`)
+
 

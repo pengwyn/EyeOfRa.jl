@@ -48,6 +48,7 @@ end
 
 include("utils.jl")
 include("printing.jl")
+include("emacs_display.jl")
 
 ##############################
 # * Observing
