@@ -1,11 +1,4 @@
 
-# function BestRepresentation(obj)
-#     if hasmethod(show, Tuple{IO,MIME"image/svg+xml",typeof(obj)})
-#         show(io, MIME"image/svg+xml"(), obs.result)
-#     else
-#         show(io, MIME"text/plain"(), obs.result)
-#     end
-# end
 
 using Plots
 
