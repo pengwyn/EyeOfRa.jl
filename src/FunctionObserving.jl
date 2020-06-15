@@ -13,31 +13,54 @@ using MacroTools
 # * Structs
 #----------------------------
 
-struct OBSERVATION{T}
+struct OBSERVATION
     time::Float64
-    # This will be a Some(...) type for successful returns
-    result::T
+    result
+    inferred_type
     stdout::String
     stderr::String
     stacktrace
 end
 import Base: ==
-==(a::OBSERVATION, b::OBSERVATION) = (something(a.result) == something(b.result) && a.stdout == b.stdout)
+# ==(a::OBSERVATION, b::OBSERVATION) = (something(a.result) == something(b.result) && a.stdout == b.stdout)
+function ==(a::OBSERVATION, b::OBSERVATION)
+    prop_set = [:result, :stdout, :stderr, :inferred_type]
+    return all(getproperty(a,prop) == getproperty(b,prop) for prop in prop_set)
+end
+
+
+mutable struct STATE
+    obs
+    last_success
+    n
+    repeats
+end
+const state = STATE(nothing, nothing, 0, 0)
+function empty!(s::STATE)
+    s.obs = nothing
+    s.last_success = nothing
+
+k_def = LinRange(0,5,101)[begin+1:end]
+    s.n = 0
+    s.repeats = 0
+end
+
 
 include("utils.jl")
 include("printing.jl")
+include("emacs_display.jl")
 
 ##############################
 # * Observing
 #----------------------------
 
-macro observe(mod, expr)
-    if @capture(expr, func_(args__))
-        :(ObserveFunction($mod, $func, $(args...)))
-    else
-        error("Doesn't appear to be a function call")
-    end
-end
+# macro observe(mod, expr)
+#     if @capture(expr, func_(args__))
+#         :(ObserveFunctionCollector($mod, $func, $(args...)))
+#     else
+#         error("Doesn't appear to be a function call")
+#     end
+# end
 
 """
     @observe func(args... ; kwds...)
@@ -56,16 +79,19 @@ macro observe(expr)
     if expr.head != :call
         error("Doesn't appear to be a function call")
     else
-        func = esc(popfirst!(expr.args))
-        args = esc.(expr.args)
+        # func = esc(popfirst!(expr.args))
+        # args = esc.(expr.args)
+        # quote
+        #     mod = typeof($func).name.module
+        #     ObserveFunctionCollector(mod, $func, $(args...))
+        # end
         quote
-            mod = typeof($func).name.module
-            ObserveFunction(mod, $func, $(args...))
+            ObserveFunctionCollector(:auto, $(esc.(expr.args)...))
         end
     end
 end
 
-
+ObserveFunctionCollector(mod, func, args... ; kwds...) = ObserveFunction(mod, func, args, kwds)
 
 """
     ObserveFunction(args...; kwds...) = ObserveFunction(stdout, args... ; kwds...)
@@ -73,48 +99,64 @@ end
 See `@observe` for details.
 """
 ObserveFunction(args...; kwds...) = ObserveFunction(stdout, args... ; kwds...)
-function ObserveFunction(io::IO, mod, func, args... ; kwds...)
-    local last_call = nothing
-    local last_success = nothing
-    local n = 0
-    local repeats = 0
+ObserveFunction(io::IO, mod::Symbol, func, args... ; kwds...) = ObserveFunction(io, (mod == :auto ? typeof(func).name.module : error("Unknown mod symbol $mod")), func, args... ; kwds...)
 
-    entr([], [mod]) do
+function ObserveFunction(io::IO, mod, func, args, kwds=[] ; show_diffs=true, continuing=false)
+    S = state
+    continuing || empty!(S)
+
+    # @show mod func args kwds
+    # error("stop")
+
+    if mod isa AbstractString
+        files = [mod]
+        mods = []
+    else
+        files = []
+        mods = [mod]
+    end
+
+    entr(files, mods) do
+        ShowRetest(io)
+
         ret = TestFunction(func, args, kwds)
-        n += 1
-        if ret == last_call
-            repeats += 1
+        S.n += 1
+        if ret == S.obs
+            S.repeats += 1
         else
-            repeats = 1
+            S.repeats = 1
         end
+        S.obs = ret
         
-        ShowHeader(io, n,repeats, (func,args,kwds))
+        ShowHeader(io, S, (func,args,kwds))
 
         if ret.result isa Exception
-            ShowError(io, ret)
-            ShowObservation(io, last_success, nothing)
-            last_call = ret
+            ShowError(io, S.obs)
+            println(io, NEGATIVE("Previous success:"))
+            ShowObservation(io, S.last_success, nothing)
         else
-            ShowObservation(io, ret, last_success)
-            last_call = last_success = ret
+            ShowObservation(io, S.obs, S.last_success)
+            S.last_success = ret
         end
     end
 end
 
 function TestFunction(func, args, kwds)
-    local out
+    local result
+    local inferred_type = nothing
     local bt = nothing
     stdout_save = IOBuffer()
     stderr_save = IOBuffer()
 
     time = @elapsed begin
         try
-            out = redirect_both(stdout_save, stderr_save) do
-                Some(Base.invokelatest(func, args... ; kwds...))
+            inferred_type = Base.return_types(func, map(typeof, args))[]
+            result = redirect_both(stdout_save, stderr_save) do
+                Base.invokelatest(func, args... ; kwds...)
             end
         catch exc
             exc isa InterruptException && rethrow()        
-            out = exc
+            result = exc
             bt = stacktrace(catch_backtrace())
             # Base.StackTraces.remove_frames!(bt, :TestFunction)
             ind = findlast(frame -> frame.func == :TestFunction, bt)
@@ -125,7 +167,7 @@ function TestFunction(func, args, kwds)
         end
     end
 
-    return OBSERVATION(time, out, String(take!(stdout_save)), String(take!(stderr_save)), bt)
+    return OBSERVATION(time, result, inferred_type, String(take!(stdout_save)), String(take!(stderr_save)), bt)
 end
 
 
