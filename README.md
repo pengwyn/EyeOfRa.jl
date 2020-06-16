@@ -1,6 +1,6 @@
 # FunctionObserving
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://pengwyn.github.io/FunctionObserving.jl/stable)
+<!-- [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://pengwyn.github.io/FunctionObserving.jl/stable) -->
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://pengwyn.github.io/FunctionObserving.jl/dev)
 [![Build Status](https://travis-ci.com/pengwyn/FunctionObserving.jl.svg?branch=master)](https://travis-ci.com/pengwyn/FunctionObserving.jl)
 
@@ -55,3 +55,5 @@ https://www.youtube.com/watch?v=8QiPFmIMxFc
 See the emacs package [julia-funcobs](https://github.com/pengwyn/julia-funcobs)
 for an IDE-like interface with `julia-repl`. Includes image support from
 `Plots.jl`.
+
+![Emacs](examples/emacs.png)
