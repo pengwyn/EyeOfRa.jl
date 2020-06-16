@@ -49,3 +49,9 @@ Notes:
 
 This idea was inspired by Brett Victor's talk "Inventing on Principle":
 https://www.youtube.com/watch?v=8QiPFmIMxFc
+
+# Emacs support
+
+See the emacs package [julia-funcobs](https://github.com/pengwyn/julia-funcobs)
+for an IDE-like interface with `julia-repl`. Includes image support from
+`Plots.jl`.
