@@ -2,28 +2,28 @@
 const C_HEAD = Crayon(bold=true, foreground=:blue)
 const C_DIFF = YELLOW_FG
 
-function ShowRetest(io)
-    println(io, Crayon(foreground=:yellow, negative=true)("Rerunning code..."))
+function ShowRetest()
+    println(Crayon(foreground=:yellow, negative=true)("Rerunning code..."))
 end
 
-function ShowHeader(io, S, (func,args,kwds))
+function ShowHeader(S, (func,args,kwds))
     display(CLEAR())
-    # println(io, "ZCLEARZ")
+    # println("ZCLEARZ")
     # run(`clear`)
     C = NEGATIVE
 
-    println(io, C("Command:"), " $func(", join(args, ", "), " ; ", join(kwds, ", "), ")")
+    println(C("Command:"), " $func(", join(args, ", "), " ; ", join(kwds, ", "), ")")
     time = Dates.format(now(), dateformat"HH:MM:SS")
-    println(io, C("Iteration: $(lpad(S.n,4))"), " - time: $(time)")
+    println(C("Iteration: $(lpad(S.n,4))"), " - time: $(time)")
     if S.repeats >= 2
-        println(io, Crayon(foreground=:green)("Repeated: $(lpad(S.repeats,4))"))
+        println(Crayon(foreground=:green)("Repeated: $(lpad(S.repeats,4))"))
     else
-        println(io)
+        println()
     end
 end
 
 
-function ShowError(io::IO, obs::OBSERVATION)
+function ShowError(obs::OBSERVATION)
     @assert obs.result isa Exception
     bts = Base.process_backtrace(obs.stacktrace)
     rows = map(bts) do bt
@@ -55,69 +55,74 @@ function ShowError(io::IO, obs::OBSERVATION)
 
         rows = join.(eachrow(tab), " | ")
     end
-    println(io, RED_BG("Exception: ", sprint(showerror, obs.result)))
-    println(io, YELLOW_FG(join(rows,"\n")))
-    println(io)
-    ShowStds(io, obs)
-    println(io)
+    println(RED_BG("Exception: ", sprint(showerror, obs.result)))
+    println(YELLOW_FG(join(rows,"\n")))
+    println()
+    ShowStds(obs)
+    println()
 end
 
-ShowObservation(io::IO, obs::Nothing, last_success) = println(io, "No observation!")
-function ShowObservation(io::IO, obs, last_success)
-    # println(io)
-    print(io, C_HEAD("Duration: "), PrettyTime(obs.time))
+ShowObservation(obs::Nothing, last_success) = println("No observation!")
+function ShowObservation(obs, last_success)
+    # println()
+    print(C_HEAD("Duration: "), PrettyTime(obs.time))
     if last_success !== nothing
         Δt = obs.time - last_success.time
         if Δt > 0
-            print(io, RED_FG(" + ", PrettyTime(abs(Δt))))
+            print(RED_FG(" + ", PrettyTime(abs(Δt))))
         else
-            print(io, GREEN_FG(" - ", PrettyTime(abs(Δt))))
+            print(GREEN_FG(" - ", PrettyTime(abs(Δt))))
         end
     end
-    println(io)
+    println()
     if (obs.result isa Exception)
-        PrettyResult(io, last_success, nothing)
+        PrettyResult(last_success, nothing)
     else
-        PrettyResult(io, obs, last_success)
+        PrettyResult(obs, last_success)
     end
 end
 
-ShowStds(io, obs::Nothing) = nothing
-function ShowStds(io, obs)
+ShowStds(obs::Nothing) = nothing
+function ShowStds(obs)
     if !isempty(obs.stdout)
-        println(io)
-        println(io, GREEN_FG("With stdout output: "))
+        println()
+        println(GREEN_FG("With stdout output: "))
         println(obs.stdout)
     end
     if !isempty(obs.stderr)
-        println(io)
-        println(io, RED_FG("With stderr output: "))
+        println()
+        println(RED_FG("With stderr output: "))
         println(obs.stderr)
     end
 end
 
 
-PrettyResult(io::IO, obs::Nothing, last_success) = println(io, "No observation")
-function PrettyResult(io::IO, obs, last_success)
-    print(io, C_HEAD("Return: "))
+PrettyResult(obs::Nothing, last_success) = println("No observation")
+function PrettyResult(obs, last_success)
+    print(C_HEAD("Return: "))
 
     if last_success === nothing || typeof(last_success.result) == typeof(obs.result)
         type_crayon = Crayon(faint=true)
     else
         type_crayon = C_DIFF
     end
-    print(io, type_crayon(string(typeof(obs.result))))
+    print(type_crayon(string(typeof(obs.result))))
 
     if obs.inferred_type != typeof(obs.result)
-        print(io, RED_FG(" <: " * string(obs.inferred_type)))
+        print(RED_FG(" <: " * string(obs.inferred_type)))
     end
 
-    println(io)
+    println()
 
-    display(obs.result)
-    println(io)
+    try
+        display(obs.result)
+    catch exc
+        println(RED_BG("Got error while trying to display result."))
+        showerror(stderr, exc)
+    end
+    println()
 
-    ShowStds(io, obs)
+    ShowStds(obs)
 end
 
 
@@ -125,7 +130,7 @@ end
 struct CLEAR end
 
 import Base: show, display
-show(io::IO, obj::CLEAR) = println(io,string(obj))
+show(obj::CLEAR) = println(string(obj))
 
 display(d::AbstractDisplay, ::CLEAR) = run(`clear`)
 

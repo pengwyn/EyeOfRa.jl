@@ -102,10 +102,9 @@ ObserveFunctionCollector(mod, func, args... ; kwds...) = ObserveFunction(mod, fu
     
 See `@observe` for details.
 """
-ObserveFunction(args...; kwds...) = ObserveFunction(stdout, args... ; kwds...)
-ObserveFunction(io::IO, mod::Symbol, func, args... ; kwds...) = ObserveFunction(io, (mod == :auto ? typeof(func).name.module : error("Unknown mod symbol $mod")), func, args... ; kwds...)
+ObserveFunction(mod::Symbol, func, args... ; kwds...) = ObserveFunction((mod == :auto ? typeof(func).name.module : error("Unknown mod symbol $mod")), func, args... ; kwds...)
 
-function ObserveFunction(io::IO, mod, func, args, kwds=[] ; show_diffs=true, continuing=false)
+function ObserveFunction(mod, func, args, kwds=[] ; show_diffs=true, continuing=false)
     S = state
     continuing || empty!(S)
 
@@ -121,7 +120,7 @@ function ObserveFunction(io::IO, mod, func, args, kwds=[] ; show_diffs=true, con
     end
 
     entr(files, mods) do
-        ShowRetest(io)
+        ShowRetest()
 
         ret = TestFunction(func, args, kwds)
         S.n += 1
@@ -132,14 +131,14 @@ function ObserveFunction(io::IO, mod, func, args, kwds=[] ; show_diffs=true, con
         end
         S.obs = ret
         
-        ShowHeader(io, S, (func,args,kwds))
+        ShowHeader(S, (func,args,kwds))
 
         if ret.result isa Exception
-            ShowError(io, S.obs)
-            println(io, NEGATIVE("Previous success:"))
-            ShowObservation(io, S.last_success, nothing)
+            ShowError(S.obs)
+            println(NEGATIVE("Previous success:"))
+            ShowObservation(S.last_success, nothing)
         else
-            ShowObservation(io, S.obs, S.last_success)
+            ShowObservation(S.obs, S.last_success)
             S.last_success = ret
         end
     end
