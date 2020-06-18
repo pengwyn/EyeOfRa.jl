@@ -49,8 +49,7 @@ function ShowError(obs::OBSERVATION)
             col_sizes[end] += total_max - sum(col_sizes)
         end
 
-        # FIXME: Need to handle unicode here properly
-        Truncate(s,n,pad) = length(s) > n ? s[1:n] : pad(s,n)
+        Truncate(s,n,pad) = length(s) > n ? s[1:nextind(s,n-1)] : pad(s,n)
         tab = Truncate.(tab, col_sizes, pad_funcs)
 
         rows = join.(eachrow(tab), " | ")
