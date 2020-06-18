@@ -122,6 +122,15 @@ function ObserveFunction(mod, func, args, kwds=[] ; show_diffs=true, continuing=
     entr(files, mods) do
         ShowRetest()
 
+        if !isempty(Revise.queue_errors)
+            # TODO: Improve this
+            ShowHeader(S, (func,args,kwds))
+            println(RED_BG("There were revise parsing errors."))
+            println()
+            Revise.errors()
+            return
+        end
+
         ret = TestFunction(func, args, kwds)
         S.n += 1
         if ret == S.obs
