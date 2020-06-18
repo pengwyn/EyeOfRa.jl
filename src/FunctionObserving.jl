@@ -40,7 +40,6 @@ function empty!(s::STATE)
     s.obs = nothing
     s.last_success = nothing
 
-k_def = LinRange(0,5,101)[begin+1:end]
     s.n = 0
     s.repeats = 0
 end
