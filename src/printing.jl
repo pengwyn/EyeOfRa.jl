@@ -1,22 +1,32 @@
 
-const C_HEAD = Crayon(bold=true, foreground=:blue)
-const C_DIFF = YELLOW_FG
+# TODO: Sort out sending these Show functions through different display routes.
+
+# This allows for basic overriding of colours in the standard output
+const C = Dict{Symbol,Crayon}()
+C[:header] = NEGATIVE
+C[:diff] = YELLOW_FG
+C[:rerun] = Crayon(foreground=:yellow, negative=true)
+C[:title] = Crayon(bold=true, foreground=:blue)
+C[:repeat] = GREEN_FG
+C[:exception] = RED_BG
+C[:trace] = YELLOW_FG
+C[:time_slower] = RED_FG
+C[:time_faster] = GREEN_FG
+C[:old] = Crayon(faint=true)
+C[:bad_inference] = RED_FG
 
 function ShowRetest()
-    println(Crayon(foreground=:yellow, negative=true)("Rerunning code..."))
+    println(C[:rerun]("Rerunning code..."))
 end
 
 function ShowHeader(S, (func,args,kwds))
     display(CLEAR())
-    # println("ZCLEARZ")
-    # run(`clear`)
-    C = NEGATIVE
 
-    println(C("Command:"), " $func(", join(args, ", "), " ; ", join(kwds, ", "), ")")
+    println(C[:header]("Command:"), " $func(", join(args, ", "), " ; ", join(kwds, ", "), ")")
     time = Dates.format(now(), dateformat"HH:MM:SS")
-    println(C("Iteration: $(lpad(S.n,4))"), " - time: $(time)")
+    println(C[:header]("Iteration: $(lpad(S.n,4))"), " - time: $(time)")
     if S.repeats >= 2
-        println(Crayon(foreground=:green)("Repeated: $(lpad(S.repeats,4))"))
+        println(C[:repeat]("Repeated: $(lpad(S.repeats,4))"))
     else
         println()
     end
@@ -54,8 +64,8 @@ function ShowError(obs::OBSERVATION)
 
         rows = join.(eachrow(tab), " | ")
     end
-    println(RED_BG("Exception: ", sprint(showerror, obs.result)))
-    println(YELLOW_FG(join(rows,"\n")))
+    println(C[:exception]("Exception: ", sprint(showerror, obs.result)))
+    println(C[:trace](join(rows,"\n")))
     println()
     ShowStds(obs)
     println()
@@ -64,13 +74,13 @@ end
 ShowObservation(obs::Nothing, last_success) = println("No observation!")
 function ShowObservation(obs, last_success)
     # println()
-    print(C_HEAD("Duration: "), PrettyTime(obs.time))
+    print(C[:title]("Duration: "), PrettyTime(obs.time))
     if last_success !== nothing
         Δt = obs.time - last_success.time
         if Δt > 0
-            print(RED_FG(" + ", PrettyTime(abs(Δt))))
+            print(C[:time_slower](" + ", PrettyTime(abs(Δt))))
         else
-            print(GREEN_FG(" - ", PrettyTime(abs(Δt))))
+            print(C[:time_faster](" - ", PrettyTime(abs(Δt))))
         end
     end
     println()
@@ -85,12 +95,12 @@ ShowStds(obs::Nothing) = nothing
 function ShowStds(obs)
     if !isempty(obs.stdout)
         println()
-        println(GREEN_FG("With stdout output: "))
+        println(C[:title]("With stdout output: "))
         println(obs.stdout)
     end
     if !isempty(obs.stderr)
         println()
-        println(RED_FG("With stderr output: "))
+        println(C[:title]("With stderr output: "))
         println(obs.stderr)
     end
 end
@@ -98,17 +108,17 @@ end
 
 PrettyResult(obs::Nothing, last_success) = println("No observation")
 function PrettyResult(obs, last_success)
-    print(C_HEAD("Return: "))
+    print(C[:title]("Return: "))
 
     if last_success === nothing || typeof(last_success.result) == typeof(obs.result)
-        type_crayon = Crayon(faint=true)
+        type_crayon = C[:old]
     else
-        type_crayon = C_DIFF
+        type_crayon = C[:diff]
     end
     print(type_crayon(string(typeof(obs.result))))
 
     if obs.inferred_type != typeof(obs.result)
-        print(RED_FG(" <: " * string(obs.inferred_type)))
+        print(C[:bad_inference](" <: " * string(obs.inferred_type)))
     end
 
     println()
@@ -116,7 +126,7 @@ function PrettyResult(obs, last_success)
     try
         display(obs.result)
     catch exc
-        println(RED_BG("Got error while trying to display result."))
+        println(C[:exception]("Got error while trying to display result."))
         showerror(stderr, exc)
     end
     println()
