@@ -1,8 +1,8 @@
-# FunctionObserving
+# Eye of Ra
 
-<!-- [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://pengwyn.github.io/FunctionObserving.jl/stable) -->
-<!-- [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://pengwyn.github.io/FunctionObserving.jl/dev) -->
-[![Build Status](https://travis-ci.com/pengwyn/FunctionObserving.jl.svg?branch=master)](https://travis-ci.com/pengwyn/FunctionObserving.jl)
+<!-- [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://pengwyn.github.io/EyeOfRa.jl/stable) -->
+<!-- [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://pengwyn.github.io/EyeOfRa.jl/dev) -->
+[![Build Status](https://travis-ci.com/pengwyn/EyeOfRa.jl.svg?branch=master)](https://travis-ci.com/pengwyn/EyeOfRa.jl)
 
 This package is aimed at removing the manual aspects of the typical programming
 change-check cycle, usually invoked by 
@@ -57,3 +57,11 @@ for an IDE-like interface with `julia-repl`. Includes image support from
 `Plots.jl`.
 
 ![Emacs](examples/emacs.png)
+
+# Naming
+
+Why "Eye of Ra"?
+
+* Watches over.
+* Protective.
+* Can get "out of control"

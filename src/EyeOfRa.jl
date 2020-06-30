@@ -1,4 +1,4 @@
-module FunctionObserving
+module EyeOfRa
 
 export @observe
 
