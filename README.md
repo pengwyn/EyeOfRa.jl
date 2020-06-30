@@ -2,7 +2,7 @@
 
 <!-- [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://pengwyn.github.io/EyeOfRa.jl/stable) -->
 <!-- [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://pengwyn.github.io/EyeOfRa.jl/dev) -->
-[![Build Status](https://travis-ci.com/github/pengwyn/EyeOfRa.jl.svg?branch=master)](https://travis-ci.com/pengwyn/EyeOfRa.jl)
+[![Build Status](https://travis-ci.com/pengwyn/EyeOfRa.jl.svg?branch=master)](https://travis-ci.com/github/pengwyn/EyeOfRa.jl)
 
 This package is aimed at removing the manual aspects of the typical programming
 change-check cycle, usually invoked by 
