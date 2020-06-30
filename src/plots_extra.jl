@@ -1,3 +1,4 @@
+using Plots
 
 function display(d::EMACS_DISPLAY, p::Plots.Plot)
     # TODO: decide which way is best to draw this.

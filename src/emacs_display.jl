@@ -1,7 +1,4 @@
 
-
-using Plots
-
 struct EMACS_DISPLAY <: AbstractDisplay end
 
 import Base: display
