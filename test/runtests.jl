@@ -31,34 +31,31 @@ end
     @test result.inferred_type == Union{Float64,Int}
 end
 
-# TODO: Fix up these checks
-# using Plots
-# PlotTest() = plot(1:10)
+
+function CaptureStdout(func)
+    mktemp() do path,io
+        redirect_stdout(func, io)
+        close(io)
+        read(path, String)
+    end
+end
+
+using Plots
+done = false
+@testset "Emacs images" begin
+    pushdisplay(EyeOfRa.EMACS_DISPLAY())
     
-# using Distributed
-# task_list = []
-# @testset "Emacs images" begin
-#     pushdisplay(EyeOfRa.EMACS_DISPLAY())
-#     old_stdout = stdout
-#     rd,wr = redirect_stdout()
+    try
+        output = CaptureStdout() do
+            display(EyeOfRa.CLEAR())
+        end
+        @test occursin("<emacs-clear></emacs-clear>", output)
 
-#     # Fallback abort as stdout redirects are annoying
-#     @async begin
-#         sleep(1)
-#         println(stderr,"Here")
-#         throwto.(task_list, ErrorException("Blocking somewhere!"))
-#     end
-
-#     try
-#         push!(task_list, @async begin
-#         display(EyeOfRa.CLEAR())
-#         readline(rd)
-#         readline(rd)
-#         @test readline(rd) == "<emacs-clear></emacs-clear>"
-#               end)
-#         wait.(task_list)
-#     finally
-#         popdisplay(EyeOfRa.EMACS_DISPLAY())
-#         redirect_stdout(old_stdout)
-#     end
-# end
+        output = CaptureStdout() do
+            display(plot(1:10))
+        end
+        @test occursin(r"<emacs-svg>.*</emacs-svg>", output)
+    finally
+        popdisplay(EyeOfRa.EMACS_DISPLAY())
+    end
+end
