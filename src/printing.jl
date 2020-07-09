@@ -16,6 +16,7 @@ C[:old] = Crayon(faint=true)
 C[:bad_inference] = RED_FG
 
 function ShowRetest()
+    display(CLEAR())
     println(C[:rerun]("Rerunning code..."))
 end
 
