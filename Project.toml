@@ -1,7 +1,7 @@
 name = "EyeOfRa"
 uuid = "80847211-bc6c-46c0-860f-0841d8001362"
 authors = ["Daniel Cocks <daniel.cocks@gmail.com> and contributors"]
-version = "0.1.5"
+version = "1.0.0"
 
 [deps]
 Crayons = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
@@ -13,6 +13,8 @@ Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 [compat]
 Crayons = "4"
 Revise = "2"
+MacroTools = "0.5"
+Requires = "1"
 julia = "1"
 
 [extras]
