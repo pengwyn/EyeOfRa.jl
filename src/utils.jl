@@ -9,15 +9,22 @@ function redirect_both(f::Function, stdout_buf, stderr_buf)
     stdout_rd,stdout_wr = redirect_stdout()
     stderr_rd,stderr_wr = redirect_stderr()
 
+    # Have to jump through hoops to clear the pipes and to not run into blocking
+    # issues.
+    transfer_stdout = @async begin
+        while isopen(stdout_wr)
+            write(stdout_buf, read(stdout_rd))
+        end
+    end
+    transfer_stderr = @async begin
+        while isopen(stderr_wr)
+            write(stderr_buf, read(stderr_rd))
+        end
+    end
+        
     try
         ret = f()
-        return ret
-    finally
-        # This is ridiculous - readavailable will block without any output and
-        # there seems to be no way to tell whether there is any output from the
-        # pipes. Is it hidden in libuv somewhere?
-        print(stdout, "\0")
-        print(stderr, "\0")
+
         flush(stdout_wr)
         flush(stderr_wr)
         Libc.flush_cstdio()
@@ -25,11 +32,14 @@ function redirect_both(f::Function, stdout_buf, stderr_buf)
         flush(stderr)
         close(stdout_wr)
         close(stderr_wr)
+        close(stdout_rd)
+        close(stderr_rd)
 
-        # # Throw away the extra null added.
-        write(stdout_buf, readavailable(stdout_rd)[begin:end-1])
-        write(stderr_buf, readavailable(stderr_rd)[begin:end-1])
+        wait(transfer_stdout)
+        wait(transfer_stderr)
 
+        return ret
+    finally
         redirect_stdout(old_stdout)
         redirect_stderr(old_stderr)
     end

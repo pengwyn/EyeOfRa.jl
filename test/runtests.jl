@@ -1,6 +1,33 @@
 using EyeOfRa
 using Test
 
+function LongTest(n)
+    @show rand(n)
+end
+
+# The below comments are what I would like to have for a test with a timeout...
+# however that version ends up blocking and defeats the point. I don't
+# understand what is going on.
+
+# @testset "Redirect tests" begin
+#     # Test for blocking - need to implement a dodgy timeout here.
+#     ch = Channel()
+#     @async begin
+#         EyeOfRa.TestFunction(LongTest, (), ())
+#         put!(ch, :success)
+#     end
+#     @async begin
+#         sleep(5)
+#         put!(ch, :failure)
+#     end
+#     @test take!(ch) == :success
+# end
+@testset "Redirect tests" begin
+    @test_nowarn EyeOfRa.TestFunction(LongTest, (2000,), ())
+    @test_nowarn EyeOfRa.TestFunction(LongTest, (4000,), ())
+end
+
+
 function BasicSuccess(x)
     println("one")
     println(stderr, "two")
