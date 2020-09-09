@@ -139,9 +139,9 @@ end
 # This is a setup to allow it to be overridden in other displays.
 struct CLEAR end
 
-import Base: show, display
-show(obj::CLEAR) = println(string(obj))
+import Base: display
+import REPL
 
-display(d::AbstractDisplay, ::CLEAR) = run(`clear`)
+display(d::REPL.REPLDisplay, ::CLEAR) = (run(`clear`);  nothing)
 
 
