@@ -39,10 +39,13 @@ Notes:
 ### Example with exception
 ![Exception](examples/error.png)
 
-## Future ideas
+## Future work
 
-* Diffs of output and returned values.
-* Multiple input arguments to test several cases at once.
+* [ ] Diffs of output and returned values.
+* [ ] Multiple input arguments to test several cases at once.
+  * [ ] Option to focus on failures or focus on successes.
+* [ ] Quick option to save tests as unit tests in package.
+* [ ] Option to load tests from `runtest.jl`.
 
 
 ## Inspiration
@@ -64,4 +67,5 @@ Why "Eye of Ra"?
 
 * Watches over.
 * Protective.
-* Can get "out of control"
+* Can get "out of control".
+* Horus always gets the attention.
